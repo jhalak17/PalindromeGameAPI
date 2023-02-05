@@ -19,7 +19,6 @@ def UserCreationView(request):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            print(serializer.data)
             return Response({"message": "User created successfully"}, status= status.HTTP_201_CREATED)
         return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -30,10 +29,8 @@ def UserLoginView(request):
         try:
             serializer = UserLoginSerializer(data=request.data)
             if serializer.is_valid():   # returns a User object if the credentials are valid
-                print("serializer in login = ", serializer.data)
                 user = UserModel.objects.get(email = serializer.data.get("email"))
                 request.session['user'] = user.id
-                print("user id stored in session = ", user.id)
                 return Response({'msg':'Login Success'}, status=status.HTTP_200_OK)  
             return Response({'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)  
         except Exception as e:
@@ -58,7 +55,6 @@ def UserManageView(request, pk):
         serializer = UserSerializer(user, data=new_data, partial = True)
         if serializer.is_valid():
             serializer.save()
-            print(serializer.data)
             return Response({"message": "Data updated successfully"}, status= status.HTTP_200_OK)
         return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -68,9 +64,7 @@ def StartGameView(request):
     if request.method == "POST":
         game_id = random.randrange(1000,9999)
         user_id = request.session.get("user")
-        print("user id under start game = ", user_id)
         user = UserModel.objects.get(id = user_id)
-        print("user under start game = ", user)
         game = GameModel(game_id = game_id, user = user)
         game.save()
         return Response({'GameId':game_id}, status=status.HTTP_200_OK) 
@@ -92,14 +86,12 @@ def UpdateBoardView(request, pk):
         game_string = game.game_string.replace("0","")
         if len(game_string) > 6:
             return Response({"message" : "Sorry!!! Game is over"}, status=status.HTTP_406_NOT_ACCEPTABLE)
-        print("game string from model = ", game_string)
         serializer = UpdateBoardSerializer(data=request.data)
         if serializer.is_valid():
             print(serializer.data)
             game_string = game_string + serializer.data.get("character")
             random_char = random.choice(string.ascii_letters)
             game_string = game_string + random_char.lower()
-            print("game string updated = ", game_string)
             game.game_string = game_string
             game.save()
             if len(game_string) == 6:
